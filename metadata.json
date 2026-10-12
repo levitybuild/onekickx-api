@@ -1,0 +1,6 @@
+{
+  "name": "ApexProxy - Developer Proxy & Anti-Bot Engine",
+  "description": "High-efficiency proxy combining Chrome 124 TLS JA3 fingerprinting, stealthed Chromium browser automation, Jina AI reader, and proxy chaining for developer scraping.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
