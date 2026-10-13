@@ -9,6 +9,57 @@
     <meta property="og:description" content="OnekickX API: High-performance football data and live odds gateway with anti-bot proxy engine." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <style id="hide-replit-pill">
+      #replit-pill-host,
+      #replit-pill,
+      replit-pill-host,
+      [id^="replit-pill"],
+      [class*="replit-pill"],
+      [data-replit-pill] {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+    </style>
+    <script>
+      (() => {
+        const selectors = [
+          '#replit-pill-host',
+          '#replit-pill',
+          'replit-pill-host',
+          '[id^="replit-pill"]',
+          '[class*="replit-pill"]',
+          '[data-replit-pill]',
+        ];
+        const selector = selectors.join(',');
+        const hide = (element) => {
+          if (!(element instanceof Element)) return;
+          if (element.matches(selector)) {
+            element.style.setProperty('display', 'none', 'important');
+            element.style.setProperty('visibility', 'hidden', 'important');
+            element.style.setProperty('pointer-events', 'none', 'important');
+          }
+          element.querySelectorAll(selector).forEach((match) => {
+            match.style.setProperty('display', 'none', 'important');
+            match.style.setProperty('visibility', 'hidden', 'important');
+            match.style.setProperty('pointer-events', 'none', 'important');
+          });
+        };
+
+        hide(document.documentElement);
+        new MutationObserver((records) => {
+          records.forEach(({ addedNodes, target }) => {
+            hide(target);
+            addedNodes.forEach(hide);
+          });
+        }).observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['id', 'class', 'data-replit-pill'],
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
