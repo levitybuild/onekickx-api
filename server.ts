@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'node:path';
 import { createServer as createViteServer } from 'vite';
 import {
   chrome_124_win,
@@ -264,14 +265,25 @@ async function startServer() {
     });
   });
 
-  // Mount Vite middlewares for SPA
-  const vite = await createViteServer({
-    server: { middlewareMode: true },
-    appType: 'spa',
-  });
-  app.use(vite.middlewares);
+  if (process.env.NODE_ENV === 'production') {
+    const frontendPath = path.resolve(process.cwd(), 'dist');
+    app.use(express.static(frontendPath));
+    app.get('*', (_req, res) => res.sendFile(path.join(frontendPath, 'index.html')));
+  } else {
+    // Mount Vite middleware for the Replit preview SPA.
+    const vite = await createViteServer({
+      server: {
+        middlewareMode: true,
+        host: '0.0.0.0',
+        allowedHosts: true,
+        cors: true,
+      },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  }
 
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+  const port = Number.parseInt(process.env.PORT || '5000', 10);
   app.listen(port, '0.0.0.0', () => {
     console.log(`ApexProxy server listening on port ${port}`);
   });

@@ -1,0 +1,1 @@
+- [SofaScore proxy verification](sofascore-proxy-verification.md) — Keep `/api/data` on the exact odds-verified elite-proxy path; never bypass it with direct upstream fetches.

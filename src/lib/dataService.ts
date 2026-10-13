@@ -250,15 +250,15 @@ class OnekickDataService {
         sampleBatch.map(async (proxy) => {
           try {
             const hopStart = Date.now();
-            const res = await fetchWithCuimp('https://www.sofascore.com/api/v1/sport/football/events/live', {
+            const res = await fetchWithCuimp('https://www.sofascore.com/api/v1/event/16115794/odds/1/all', {
               proxy: `http://${proxy}`,
               timeoutMs: 4000,
             });
             const latency = Date.now() - hopStart;
 
-            // Strict validation: must be 200 OK and return valid JSON with events array
-            if (res.statusCode === 200 && res.data && (res.data.events || Array.isArray(res.data.events))) {
-              console.log(`[OnekickDataService] ⚽ Verified working SofaScore live proxy added: ${proxy} (${latency}ms)`);
+            // Only mark proxies elite when the actual odds endpoint returns JSON successfully.
+            if (res.statusCode === 200 && res.data && typeof res.data === 'object') {
+              console.log(`[OnekickDataService] Verified SofaScore odds proxy added: ${proxy} (${latency}ms)`);
               this.proxyHealthMap.set(proxy, {
                 proxy,
                 successCount: 5,
