@@ -24,6 +24,11 @@ const PROFILES: Record<string, TlsProfile> = {
 async function startServer() {
   const app = express();
   app.use(express.json());
+  let dataApiControl = {
+    enabled: true,
+    statusCode: 503,
+    message: 'API temporarily unavailable',
+  };
 
   // Open CORS middleware for /api/data and API consumers
   app.use('/api/data', (req, res, next) => {
@@ -61,6 +66,35 @@ async function startServer() {
     }
   };
 
+  app.get('/api/data/control', (_req, res) => {
+    res.json(dataApiControl);
+  });
+
+  app.put('/api/data/control', (req, res) => {
+    const { enabled, statusCode, message } = req.body ?? {};
+    const code = Number(statusCode);
+
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({ error: '"enabled" must be a boolean' });
+    }
+    if (!Number.isInteger(code) || code < 200 || code > 599 || [204, 205, 304].includes(code)) {
+      return res.status(400).json({ error: 'Use a response code from 200–599 that includes a response body' });
+    }
+    if (typeof message !== 'string' || message.length > 2000) {
+      return res.status(400).json({ error: '"message" must be text of 2000 characters or fewer' });
+    }
+
+    dataApiControl = { enabled, statusCode: code, message };
+    return res.json(dataApiControl);
+  });
+
+  const handleControlledDataRequest = (req: express.Request, res: express.Response) => {
+    if (!dataApiControl.enabled) {
+      return res.status(dataApiControl.statusCode).type('text/plain').send(dataApiControl.message);
+    }
+    return handleDataRequest(req, res);
+  };
+
   app.get('/api/data/pool', (req, res) => {
     res.json({
       status: 'active',
@@ -70,8 +104,8 @@ async function startServer() {
     });
   });
 
-  app.get('/api/data', handleDataRequest);
-  app.post('/api/data', handleDataRequest);
+  app.get('/api/data', handleControlledDataRequest);
+  app.post('/api/data', handleControlledDataRequest);
 
   // GET /api/profiles - Returns supported TLS & Browser signatures
   app.get('/api/profiles', (req, res) => {

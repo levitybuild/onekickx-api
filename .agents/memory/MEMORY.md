@@ -1,1 +1,2 @@
 - [SofaScore proxy verification](sofascore-proxy-verification.md) — Keep `/api/data` on the exact odds-verified elite-proxy path; never bypass it with direct upstream fetches.
+- [Private API settings page](private-api-settings-page.md) — Keep `/set` off the public homepage and protect its controls from unauthorized access.
