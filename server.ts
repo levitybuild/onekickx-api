@@ -20,12 +20,14 @@ const PROFILES: Record<string, TlsProfile> = {
   firefox_125_win,
   safari_17_mac,
 };
+const SET_ACCESS_CODE = '988555';
 
 async function startServer() {
   const app = express();
   app.use(express.json());
   let dataApiControl = {
     enabled: true,
+    overrideEnabled: false,
     statusCode: 503,
     message: 'API temporarily unavailable',
   };
@@ -34,7 +36,7 @@ async function startServer() {
   app.use('/api/data', (req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Set-Code');
     if (req.method === 'OPTIONS') {
       return res.sendStatus(204);
     }
@@ -66,16 +68,26 @@ async function startServer() {
     }
   };
 
+  app.use('/api/data/control', (req, res, next) => {
+    if (req.get('X-Set-Code') !== SET_ACCESS_CODE) {
+      return res.status(401).type('text/plain').send('Guardrail debugging');
+    }
+    next();
+  });
+
   app.get('/api/data/control', (_req, res) => {
     res.json(dataApiControl);
   });
 
   app.put('/api/data/control', (req, res) => {
-    const { enabled, statusCode, message } = req.body ?? {};
+    const { enabled, overrideEnabled, statusCode, message } = req.body ?? {};
     const code = Number(statusCode);
 
     if (typeof enabled !== 'boolean') {
       return res.status(400).json({ error: '"enabled" must be a boolean' });
+    }
+    if (typeof overrideEnabled !== 'boolean') {
+      return res.status(400).json({ error: '"overrideEnabled" must be a boolean' });
     }
     if (!Number.isInteger(code) || code < 200 || code > 599 || [204, 205, 304].includes(code)) {
       return res.status(400).json({ error: 'Use a response code from 200–599 that includes a response body' });
@@ -84,12 +96,12 @@ async function startServer() {
       return res.status(400).json({ error: '"message" must be text of 2000 characters or fewer' });
     }
 
-    dataApiControl = { enabled, statusCode: code, message };
+    dataApiControl = { enabled, overrideEnabled, statusCode: code, message };
     return res.json(dataApiControl);
   });
 
   const handleControlledDataRequest = (req: express.Request, res: express.Response) => {
-    if (!dataApiControl.enabled) {
+    if (!dataApiControl.enabled || dataApiControl.overrideEnabled) {
       return res.status(dataApiControl.statusCode).type('text/plain').send(dataApiControl.message);
     }
     return handleDataRequest(req, res);
